@@ -44,6 +44,21 @@ export default class Obj {
     }
 
     /**
+     * @param array
+     * @param needle
+     * @return {boolean}
+     */
+    static inArray(array: Array, needle: any): boolean {
+        for (let haystack of array) {
+            if (haystack === needle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @param {*} object
      * @return {boolean}
      */

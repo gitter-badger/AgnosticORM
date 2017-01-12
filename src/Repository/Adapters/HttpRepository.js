@@ -5,6 +5,7 @@ import Repository from './Repository';
 import Collection from '../../Support/Collection';
 import HttpQueryRequest from '../Requests/HttpQueryRequest';
 import HttpQueryResponse from '../Response/HttpQueryResponse';
+import Metadata from '../../DataMapper/Metadata';
 
 /**
  * Json Http REST repository
@@ -32,9 +33,10 @@ export default class HttpRepository extends Repository {
 
     /**
      * @param entityClass
+     * @param meta
      */
-    constructor(entityClass: Function) {
-        super(entityClass);
+    constructor(entityClass: Function, meta: Metadata) {
+        super(entityClass, meta);
 
         this.addHeader('Accept', 'application/json');
         this.addHeader('Content-Type', 'application/json');

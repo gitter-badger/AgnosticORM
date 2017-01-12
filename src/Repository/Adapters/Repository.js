@@ -4,6 +4,7 @@ import Strategy from '../../DataMapper/Strategy';
 import Collection from '../../Support/Collection';
 import QueryRequest from '../Requests/QueryRequest';
 import QueryResponse from '../Response/QueryResponse';
+import Metadata from '../../DataMapper/Metadata';
 
 /**
  * Contract for a persistence layer class to implement.
@@ -16,16 +17,16 @@ export default class Repository {
     _entity: Function<T>;
 
     /**
-     * @type {Reader}
      * @private
      */
-    _reader: Reader;
+    _meta: Metadata;
 
     /**
-     * @type {string}
-     * @private
+     * @return {Metadata}
      */
-    _primaryKey: string;
+    get meta(): Metadata {
+        return this._meta;
+    }
 
     /**
      * @type {QueryRequest}
@@ -54,40 +55,15 @@ export default class Repository {
     }
 
     /**
-     * @type {Strategy}
-     * @private
+     * @param entity
+     * @param meta
      */
-    _strategy: Strategy;
-
-    /**
-     * @return {Strategy}
-     */
-    get strategy(): Strategy {
-        return this._strategy;
-    }
-
-    /**
-     * @param {Function<T>} entity
-     */
-    constructor(entity: Function<T>) {
+    constructor(entity: Function<T>, meta: Metadata) {
         this._entity = entity;
-        this._reader = new Reader(entity);
-        this._primaryKey = this._getPrimaryKey();
+        this._meta = meta;
 
         this.setRequestFormatter(QueryRequest);
         this.setResponseFormatter(QueryResponse);
-
-        this.setMappingStrategy(Strategy.fromEntity(entity));
-    }
-
-    /**
-     * @param strategy
-     * @return {Repository}
-     */
-    setMappingStrategy(strategy: Strategy): Repository {
-        this._strategy = strategy;
-
-        return this;
     }
 
     /**
@@ -108,24 +84,6 @@ export default class Repository {
         this._responseFormatter = new response(this);
 
         return this;
-    }
-
-    /**
-     * @return {string}
-     * @private
-     */
-    _getPrimaryKey(): string {
-        let properties = this._reader.getPropertiesMetadataKeys();
-
-        for (let property of properties) {
-            let annotation = this._reader.getPropertyAnnotation('Id', property);
-
-            if (annotation !== null) {
-                return property;
-            }
-        }
-
-        throw new TypeError(`Entity ${this.getEntityClassName()} has no primary key definition`);
     }
 
     /**
@@ -239,6 +197,6 @@ export default class Repository {
      * @return {string}
      */
     getPrimaryKeyName(): string {
-        return this._primaryKey;
+        return this._meta.getPrimaryKeyName()
     }
 }

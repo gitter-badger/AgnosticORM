@@ -1,5 +1,6 @@
 import Reader from '../Annotation/Reader';
 import Repository from "./Adapters/Repository";
+import Agnostic from '../Agnostic';
 
 
 export default class Manager {
@@ -14,6 +15,18 @@ export default class Manager {
      * @private
      */
     _repositories = new WeakMap();
+
+    /**
+     * @private
+     */
+    _orm: Agnostic;
+
+    /**
+     * @param orm
+     */
+    constructor(orm: Agnostic) {
+        this._orm = orm;
+    }
 
     /**
      * @param {Object} entity
@@ -40,6 +53,6 @@ export default class Manager {
 
         let repositoryClass = annotation.repository || this._default;
 
-        return new repositoryClass(entity);
+        return new repositoryClass(entity, this._orm.getMetadata(entity));
     }
 }

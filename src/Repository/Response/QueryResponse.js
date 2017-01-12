@@ -43,10 +43,9 @@ export default class QueryResponse {
      * @return {Object}
      */
     fill(item: Object, direct: boolean = true): Object {
-        let cls = this.repository.getEntityClass();
+        const meta = this.repository.meta;
 
-        return (new Transfer(this.repository.strategy))
-            .from(item)
-            .to(new cls(item), direct);
+        return this.repository.meta
+            .fill(meta.create(item), item);
     }
 }

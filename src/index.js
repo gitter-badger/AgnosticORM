@@ -12,8 +12,8 @@ let orm = new Agnostic();
 
 
 class UsersRepository extends HttpRepository {
-    constructor(entityClass) {
-        super(entityClass);
+    constructor(entityClass, metadata) {
+        super(entityClass, metadata);
 
         this.addRoute('index', new Route('users.json'));
     }
@@ -34,7 +34,6 @@ class User {
     @Column({ name: 'any.olololo' })
     testSubValue = null;
 }
-
 
 orm.getRepository(User)
     .query
