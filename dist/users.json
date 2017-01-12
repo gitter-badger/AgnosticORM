@@ -1,0 +1,25 @@
+[
+    {
+        "id":            1,
+        "login":         "Login",
+        "name":          "Username",
+        "avatar":        "https:\/\/avatars2.githubusercontent.com\/KarmaBot?v=3&s=128",
+        "some":          "@some",
+        "any":           {
+            "olololo": "@any.olololo",
+            "sub":     {
+                "value": "@any.sub.value"
+            }
+        },
+        "items_example": [
+            {
+                "id":   23,
+                "name": "test id 23"
+            },
+            {
+                "id":   42,
+                "name": "test id 42"
+            }
+        ]
+    }
+]
