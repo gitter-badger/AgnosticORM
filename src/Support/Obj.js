@@ -1,5 +1,7 @@
 export default class Obj {
     /**
+     * Get an item from an array using delimiter notation.
+     *
      * @param {Object.<T>} object
      * @param {string|null} key
      * @param {*} _default
@@ -31,14 +33,39 @@ export default class Obj {
     }
 
     /**
-     * TODO
+     * Set an object item to a given value using delimiter notation.
+     *
+     * If no key is given to the method, the entire object will be replaced.
+     *
      * @param object
      * @param key
      * @param value
-     * @return {Object.<T>}
+     * @param delimiter
+     * @return {*}
      */
-    static set(object: Object<T>, key: ?string, value: any): Object<T> {
-        object[key] = value;
+    static set(object: Object<T>, key: ?string, value: any, delimiter: string = '.'): Object<T> {
+        let context = object;
+
+        if (key === null) {
+            return value;
+        }
+
+        let keys = key.toString().split(delimiter);
+
+        while (keys.length > 1) {
+            key = keys.shift();
+
+            // If the key doesn't exist at this depth, we will just create an empty object
+            // to hold the next value, allowing us to create the objects to hold final
+            // values at the correct depth. Then we'll keep digging into the object.
+            if (typeof context[key] === 'undefined' || typeof context[key] !== 'object') {
+                context[key] = {};
+            }
+
+            context = context[key];
+        }
+
+        context[keys.shift()] = value;
 
         return object;
     }

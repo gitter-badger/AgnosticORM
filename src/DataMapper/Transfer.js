@@ -43,8 +43,8 @@ export default class Transfer {
      * @return {Object.<T>}
      */
     to(target: Object<T>, direct: boolean = true): Object<T> {
-        const mapping   = this.strategy.mapping;
-        const delimiter = this.strategy.depthDelimiter;
+        const mapping   = this.strategy.getMapping();
+        const delimiter = this.strategy.getDepthDelimiter();
 
         for (let from of Object.keys(mapping)) {
             let to = mapping[from];

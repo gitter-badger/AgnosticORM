@@ -14,25 +14,6 @@ export default class Strategy {
     _depthDelimiter: string = '.';
 
     /**
-     * @param entity
-     * @return {Strategy}
-     */
-    static fromEntity(entity): Strategy {
-        let reader = new Reader(entity);
-        let map    = {};
-
-        for (let propertyName of reader.getPropertiesMetadataKeys()) {
-            for (let annotation of reader.getPropertyAnnotations(propertyName)) {
-                if (annotation.constructor.name === 'Id' || annotation.constructor.name === 'Column') {
-                    map[annotation.name || propertyName] = propertyName;
-                }
-            }
-        }
-
-        return new Strategy(map);
-    }
-
-    /**
      * @param {Object} mapping
      */
     constructor(mapping: Object = {}) {
@@ -44,7 +25,7 @@ export default class Strategy {
     /**
      * @param delimiter
      */
-    set depthDelimiter(delimiter: string) {
+    setDepthDelimiter(delimiter: string) {
         if (delimiter.toString().length !== 1) {
             throw new TypeError('Delimiter must be a 1-char length');
         }
@@ -55,7 +36,7 @@ export default class Strategy {
     /**
      * @return {string}
      */
-    get depthDelimiter(): string {
+    getDepthDelimiter(): string {
         return this._depthDelimiter;
     }
 
@@ -73,7 +54,7 @@ export default class Strategy {
     /**
      * @return {Object}
      */
-    get mapping(): Object {
+    getMapping(): Object {
         return Object.assign({}, this._mapping);
     }
 }

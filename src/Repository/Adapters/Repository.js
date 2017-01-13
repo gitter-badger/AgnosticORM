@@ -1,10 +1,7 @@
-import Query from '../Query';
-import Reader from '../../Annotation/Reader';
-import Strategy from '../../DataMapper/Strategy';
-import Collection from '../../Support/Collection';
-import QueryRequest from '../Requests/QueryRequest';
-import QueryResponse from '../Response/QueryResponse';
+import Str from '../../Support/Str';
+import Builder from '../Query/Builder';
 import Metadata from '../../DataMapper/Metadata';
+import Collection from '../../Support/Collection';
 
 /**
  * Contract for a persistence layer class to implement.
@@ -22,37 +19,14 @@ export default class Repository {
     _meta: Metadata;
 
     /**
-     * @return {Metadata}
-     */
-    get meta(): Metadata {
-        return this._meta;
-    }
-
-    /**
-     * @type {QueryRequest}
      * @private
      */
-    _requestFormatter: QueryRequest;
+    _qb: Builder = Builder;
 
     /**
-     * @return {QueryRequest}
-     */
-    get requestFormatter(): QueryRequest {
-        return this._requestFormatter;
-    }
-
-    /**
-     * @type {QueryResponse}
      * @private
      */
-    _responseFormatter: QueryResponse;
-
-    /**
-     * @return {QueryResponse}
-     */
-    get responseFormatter(): QueryResponse {
-        return this._responseFormatter;
-    }
+    _table: string = '';
 
     /**
      * @param entity
@@ -62,42 +36,56 @@ export default class Repository {
         this._entity = entity;
         this._meta = meta;
 
-        this.setRequestFormatter(QueryRequest);
-        this.setResponseFormatter(QueryResponse);
+
+        this.setTable(Str.snakeCase(this.getEntityClassName()) + 's');
     }
 
     /**
-     * @param request
+     * @param qb
      * @return {Repository}
      */
-    setRequestFormatter(request: QueryRequest): Repository {
-        this._requestFormatter = new request(this);
+    setQueryBuilder(qb: Builder): Repository {
+        this._qb = qb;
 
         return this;
     }
 
     /**
-     * @param response
+     * @return {Builder}
+     */
+    getQueryBuilder(): Builder {
+        return this._qb;
+    }
+
+    /**
+     * @param name
      * @return {Repository}
      */
-    setResponseFormatter(response: QueryResponse): Repository {
-        this._responseFormatter = new response(this);
+    setTable(name: string): Repository {
+        this._table = name;
 
         return this;
     }
 
     /**
-     * @return {Query|{get: Promise}}
+     * @return {string}
      */
-    get query(): Promise<Query> {
-        let _self = this;
-        let query = new Query();
+    getTable(): string {
+        return this._table;
+    }
 
-        query.get = function () {
-            return _self.findBy(this);
-        };
+    /**
+     * @return {Metadata}
+     */
+    getMetadata(): Metadata {
+        return this._meta;
+    }
 
-        return query;
+    /**
+     * @return {Builder}
+     */
+    get query(): Builder {
+        return new this._qb(this);
     }
 
     /**
@@ -107,7 +95,7 @@ export default class Repository {
      * @return {Promise.<Object>}
      */
     async find(primaryKey): Promise<Object> {
-        throw new ReferenceError(`Action ${this.constructor.name}.find() are not allowed`);
+        return this.query.where(this._meta.getPrimaryKeyName(), primaryKey).get();
     }
 
     /**
@@ -116,7 +104,7 @@ export default class Repository {
      * @return {Promise.<Collection>}
      */
     async findAll(): Promise<Collection> {
-        throw new ReferenceError(`Action ${this.constructor.name}.findAll() are not allowed`);
+        return this.query.get();
     }
 
     /**
@@ -126,21 +114,21 @@ export default class Repository {
      * an UnexpectedValueException if certain values of the sorting or limiting details are
      * not supported.
      *
-     * @param {Query} query
+     * @param {Builder} query
      * @return {Promise.<Collection>}
      */
-    async findBy(query: Query): Promise<Collection> {
-        throw new ReferenceError(`Action ${this.constructor.name}.findBy() are not allowed`);
+    async findBy(query: Builder): Promise<Collection> {
+        throw new ReferenceError(`Action ${this.constructor.name}.findBy() are not implemented`);
     }
 
     /**
      * Finds a single object by a set of criteria.
      *
-     * @param {Query} query
+     * @param {Builder} query
      * @return {Promise.<Object>}
      */
-    async findOneBy(query: Query): Promise<Object> {
-        throw new ReferenceError(`Action ${this.constructor.name}.findOneBy() are not allowed`);
+    async findOneBy(query: Builder): Promise<Object> {
+        return (await this.findBy(query)).first();
     }
 
     /**
@@ -148,7 +136,7 @@ export default class Repository {
      * @return {Promise.<boolean>}
      */
     async save(entity: Object<T>): Promise<boolean> {
-        throw new ReferenceError(`Action ${this.constructor.name}.save() are not allowed`);
+        throw new ReferenceError(`Action ${this.constructor.name}.save() are not implemented`);
     }
 
     /**
@@ -156,7 +144,13 @@ export default class Repository {
      * @return {Promise.<boolean>}
      */
     async saveMany(entities: Array<Object>): Promise<boolean> {
-        throw new ReferenceError(`Action ${this.constructor.name}.saveMany() are not allowed`);
+        let promises = [];
+
+        for (let entity of entities) {
+            promises.push(this.save(entity));
+        }
+
+        return await Promise.all(promises);
     }
 
     /**
@@ -164,7 +158,7 @@ export default class Repository {
      * @return {Promise.<boolean>}
      */
     async remove(entity: Object<T>): Promise<boolean> {
-        throw new ReferenceError(`Action ${this.constructor.name}.remove() are not allowed`);
+        throw new ReferenceError(`Action ${this.constructor.name}.remove() are not implemented`);
     }
 
     /**
@@ -172,7 +166,13 @@ export default class Repository {
      * @return {Promise.<boolean>}
      */
     async removeMany(entities: Array<Object>): Promise<boolean> {
-        throw new ReferenceError(`Action ${this.constructor.name}.removeMany() are not allowed`);
+        let promises = [];
+
+        for (let entity of entities) {
+            promises.push(this.remove(entity));
+        }
+
+        return await Promise.all(promises);
     }
 
     /**

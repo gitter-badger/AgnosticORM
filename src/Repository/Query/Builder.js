@@ -1,3 +1,6 @@
+import Repository from '../Adapters/Repository';
+import Collection from '../../Support/Collection';
+
 class Criteria {
     /**
      * @type {string}
@@ -58,40 +61,59 @@ class Criteria {
     }
 }
 
-
-export default class Query {
+export default class Builder {
     /**
      * @type {Array<Criteria>}
-     * @private
+     * @protected
      */
     _wheres = [];
 
     /**
      * @type {Array<string>}
-     * @private
+     * @protected
      */
     _orderBy = [];
 
     /**
-     * @type {null}
-     * @private
+     * @type {null|number}
+     * @protected
      */
-    _limit = null;
+    _limit: ?number = null;
 
     /**
-     * @type {null}
-     * @private
+     * @type {null|number}
+     * @protected
      */
-    _skip = null;
+    _skip: ?number = null;
+
+    /**
+     * @type {Repository}
+     * @protected
+     */
+    _repo: Repository;
+
+    /**
+     * @param repo
+     */
+    constructor(repo) {
+        this._repo = repo;
+    }
+
+    /**
+     * @return {Repository}
+     */
+    getRepository(): Repository {
+        return this._repo;
+    }
 
     /**
      * @param {string} field
      * @param {*} operatorOrValue
      * @param {*|null} value
-     * @return {Query}
+     * @return {Builder}
      */
-    where(field: string, operatorOrValue: any, value = null): Query {
-        let criteria = new Criteria(...Query._where(field, operatorOrValue, value));
+    where(field: string, operatorOrValue: any, value = null): Builder {
+        let criteria = new Criteria(...Builder._where(field, operatorOrValue, value));
 
         this._wheres.push(criteria);
 
@@ -100,9 +122,9 @@ export default class Query {
 
     /**
      * @param {string} field
-     * @return {Query}
+     * @return {Builder}
      */
-    whereNull(field: string): Query {
+    whereNull(field: string): Builder {
         this._wheres.push(new Criteria(field, '=', null));
 
         return this;
@@ -110,9 +132,9 @@ export default class Query {
 
     /**
      * @param {string} fields
-     * @return {Query}
+     * @return {Builder}
      */
-    orderBy(...fields): Query {
+    orderBy(...fields): Builder {
         for (let field of fields) {
             this._orderBy.push(field);
         }
@@ -122,9 +144,9 @@ export default class Query {
 
     /**
      * @param {number} count
-     * @return {Query}
+     * @return {Builder}
      */
-    take(count: number): Query {
+    take(count: number): Builder {
         this._limit = count;
 
         return this;
@@ -132,9 +154,9 @@ export default class Query {
 
     /**
      * @param {number} count
-     * @return {Query}
+     * @return {Builder}
      */
-    skip(count: number): Query {
+    skip(count: number): Builder {
         this._skip = count;
 
         return this;
@@ -151,6 +173,20 @@ export default class Query {
         return value === null
             ? [field, '=', operatorOrValue]
             : [field, operatorOrValue, value];
+    }
+
+    /**
+     * @return {string}
+     */
+    async get(): Collection {
+        return await this._repo.findBy(this);
+    }
+
+    /**
+     * @return {string}
+     */
+    getQuery(): string {
+        return '';
     }
 
     /**

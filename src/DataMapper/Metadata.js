@@ -42,6 +42,13 @@ export default class Metadata {
     }
 
     /**
+     * @return {Strategy}
+     */
+    getStrategy(): Strategy {
+        return this._strategy;
+    }
+
+    /**
      * @param entity
      * @param data
      * @return {Object.<T>}
