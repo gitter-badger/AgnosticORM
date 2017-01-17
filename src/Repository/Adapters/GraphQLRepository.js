@@ -4,15 +4,13 @@ import HttpRepository from './HttpRepository';
 
 export default class GraphQLRepository extends HttpRepository {
     /**
-     * @constructor
      * @param entityClass
-     * @param meta
+     * @param orm
      */
-    constructor(entityClass, meta) {
-        super(entityClass, meta);
+    constructor(entityClass, orm) {
+        super(entityClass, orm);
 
         this.setQueryBuilder(GraphQLBuilder);
-
 
         this.addHeader('Accept', 'application/json');
         this.addHeader('Content-Type', 'application/json');

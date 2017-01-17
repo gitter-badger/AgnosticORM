@@ -3,6 +3,21 @@ import Reader from '../Annotation/Reader';
 import Obj from '../Support/Obj';
 import Transfer from './Transfer';
 
+const META_PRIMARY_KEYS_DEFINITIONS = [
+    'Id'
+];
+
+const META_PROPERTY_DEFINITIONS = [
+    'Id',
+    'Column'
+];
+
+const META_RELATION_DEFINITIONS = [
+    'HasMany',
+    'HasOne'
+];
+
+
 export default class Metadata {
     /**
      * @private
@@ -30,14 +45,22 @@ export default class Metadata {
     _strategy: Strategy;
 
     /**
+     * @type {{}}
+     * @private
+     */
+    _relations: Object = {};
+
+    /**
      * @param entityClass
      */
     constructor(entityClass: Function<T>) {
         this._entityClass = entityClass;
-        this._reader = new Reader(entityClass);
+        this._reader      = new Reader(entityClass);
 
-        this._key = this._getPrimaryKey(this._reader, 'Id');
-        this._properties = this._getProperties(this._reader, ['Id', 'Column']);
+        this._key        = this._getPrimaryKey(this._reader, META_PRIMARY_KEYS_DEFINITIONS);
+        this._properties = this._getProperties(this._reader, META_PROPERTY_DEFINITIONS);
+        this._relations  = this._getRelations(this._reader, META_RELATION_DEFINITIONS);
+
         this._strategy = new Strategy(this.getProperties());
     }
 
@@ -71,12 +94,12 @@ export default class Metadata {
 
     /**
      * @param reader
-     * @param definition
+     * @param definitions
      * @return {string}
      * @private
      */
-    _getPrimaryKey(reader: Reader, definition: string): string {
-        let keys = Object.keys(this._getProperties(reader, [definition]));
+    _getPrimaryKey(reader: Reader, definitions: Array = []): string {
+        let keys = Object.keys(this._getProperties(reader, definitions));
 
         if (keys.length > 1) {
             throw new TypeError(`Composite keys are not supported`);
@@ -111,6 +134,31 @@ export default class Metadata {
     }
 
     /**
+     * @param reader
+     * @param definitions
+     * @return {Array}
+     * @private
+     */
+    _getRelations(reader: Reader, definitions: Array): Array {
+        let map = {};
+
+        // All properties of class
+        for (let property of reader.getPropertiesMetadataKeys()) {
+
+            // Annotations of target property
+            for (let annotation of reader.getPropertyAnnotations(property)) {
+                if (Obj.inArray(definitions, annotation.constructor.name)) {
+                    annotation.validate();
+
+                    map[annotation.name || property] = annotation;
+                }
+            }
+        }
+
+        return map;
+    }
+
+    /**
      * @param args
      * @return {Object.<T>}
      */
@@ -133,6 +181,13 @@ export default class Metadata {
      */
     getPrimaryKey(entity: Object): any {
         return entity[this.getPrimaryKeyName()] || null;
+    }
+
+    /**
+     * @return {Object}
+     */
+    getRelations() {
+        return this._relations;
     }
 
     /**

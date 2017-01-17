@@ -53,6 +53,6 @@ export default class Manager {
 
         let repositoryClass = annotation.repository || this._default;
 
-        return new repositoryClass(entity, this._orm.getMetadata(entity));
+        return new repositoryClass(entity, this._orm);
     }
 }

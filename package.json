@@ -22,7 +22,10 @@
         "babel-preset-stage-0": "^6.16.0",
         "babel-runtime": "^6.20.0",
         "cross-env": "^3.1.3",
-        "webpack": "^1.14.0",
-        "flow-bin": "^0.37.4"
+        "flow-bin": "^0.37.4",
+        "webpack": "^1.14.0"
+    },
+    "devDependencies": {
+        "graphql": "^0.8.2"
     }
 }

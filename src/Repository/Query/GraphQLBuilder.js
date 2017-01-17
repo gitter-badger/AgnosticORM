@@ -1,125 +1,101 @@
 import Builder from './Builder';
-import Obj from '../../Support/Obj';
-import Str from '../../Support/Str';
+import Query from './GraphQLBuilder/Query';
+import Relation from '../../Mapping/Relation';
+import Metadata from '../../DataMapper/Metadata';
+import GraphQLRepository from '../Adapters/GraphQLRepository';
+
 
 export default class GraphQLBuilder extends Builder {
     /**
      * @return {string}
      */
     getQuery(): string {
-        let repo  = this.getRepository();
+        let query = this.getNativeQuery();
 
-        let graph = this._createObjectGraph();
-
-        graph = this._createWhereQuery(graph);
-
-        graph = this._compileGraph({ [repo.getTable()]: graph });
-
-        graph = this._format(`query ${graph}`);
-
-        return graph;
+        return `query { ${query.build()} }`;
     }
 
     /**
-     * @return {{}}
+     * @return {Query}
+     */
+    getNativeQuery(): Query {
+        let query = new Query(this.getRepository().getTable());
+
+        /* == ADD WHERES == */
+        query = this._buildWhere(query);
+
+        /* == ADD FIELDS == */
+        query = this._buildFields(query);
+
+        /* == ADD RELATIONS == */
+        query = this._buildRelations(query);
+
+        return query;
+    }
+
+    /**
+     * @param query
+     * @return {Query}
      * @private
      */
-    _createWhereQuery(graph: Object) {
-        const map = this.getRepository().getMetadata().getProperties();
+    _buildFields(query: Query) {
+        const meta = this.getRepository().getMetadata();
 
-        let getMapName = name => {
-            for (let field of Object.keys(map)) {
-                if (map[field] === name) {
-                    return field;
-                }
+        for (let field of meta.getPropertyMappings()) {
+            query.addField(field);
+        }
+
+        return query;
+    }
+
+    /**
+     * @param query
+     * @return {Query}
+     * @private
+     */
+    _buildRelations(query: Query) {
+        const meta = this.getRepository().getMetadata();
+        const relations = meta.getRelations();
+
+        for (let relationName of Object.keys(relations)) {
+            let relation = relations[relationName];
+
+            console.log(relation.fetch);
+
+            switch (relation.fetch) {
+                case Relation.FETCH_TYPE_EAGER:
+                    let repository = this.getRepository()
+                        .getOrm()
+                        .getRepository(relation.relatedTo);
+
+                    if (repository instanceof GraphQLRepository) {
+                        query = query.merge(repository.getTable(), repository.query.getNativeQuery().getFields());
+                    } else {
+                        console.error('Fetch relation for non GraphQLRepository');
+                    }
+
+                    break;
             }
 
-            throw new TypeError(`Field ${name} not defined in ${this.getRepository().getEntityClassName()} entity`);
-        };
+        }
 
+        return query;
+    }
+
+    /**
+     * @param query
+     * @return {Query}
+     * @private
+     */
+    _buildWhere(query: Query): Query {
         for (let criterion of this._wheres) {
             if (criterion.operator !== '=') {
-                throw new TypeError(`Operator ${criterion.operator} are not allowed for GraphQL queries`);
+                throw new TypeError(`Invalid GraphQL query operator "${criterion.operator}"`);
             }
 
-            graph = Obj.set(graph, getMapName(criterion.field), criterion.value);
+            query.addFilter(criterion.field, criterion.value);
         }
 
-        return graph;
-    }
-
-    /**
-     * @return {{}}
-     * @private
-     */
-    _createObjectGraph() {
-        const meta      = this.getRepository().getMetadata();
-        const map       = meta.getPropertyMappings();
-        const delimiter = meta.getStrategy().getDepthDelimiter();
-
-        let graph = {};
-
-        for (let key of map) {
-            graph = Obj.set(graph, key, null, delimiter);
-        }
-
-        return graph;
-    }
-
-    /**
-     * @param graph
-     * @return {string}
-     * @private
-     */
-    _compileGraph(graph: Object): string {
-        let result = '{\n';
-
-        let where  = [];
-
-        for (let leaf of Object.keys(graph)) {
-            let value = graph[leaf];
-
-            result += leaf;
-
-            if (value) {
-                if (typeof value === 'object') {
-                    result += ` ${this._compileGraph(value)}`;
-                } else {
-                    where.push(`${leaf}: ${value}`);
-                }
-            }
-
-            result += "\n";
-        }
-
-        if (where.length > 0) {
-            result = `(${where.join(', ')}) ${result}`
-        }
-
-        return result + '}';
-    }
-
-
-    /**
-     * @param graph
-     * @return {string}
-     * @private
-     */
-    _format(graph: string) {
-        let level = 0;
-
-        return graph.replace(/(^.*?$)/gm, (i, group) => {
-            if (Str.endsWith(group, '}')) {
-                level -= 1;
-            }
-
-            let result = Str.repeat(' ', level * 4) + group;
-
-            if (Str.endsWith(group, '{')) {
-                level += 1;
-            }
-
-            return result;
-        });
+        return query;
     }
 }

@@ -23,10 +23,10 @@ export default class HttpRepository extends Repository {
 
     /**
      * @param entityClass
-     * @param meta
+     * @param orm
      */
-    constructor(entityClass, meta) {
-        super(entityClass, meta);
+    constructor(entityClass, orm) {
+        super(entityClass, orm);
 
         this.setCorsOption('same-origin');
     }

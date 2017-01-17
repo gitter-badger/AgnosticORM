@@ -2,6 +2,7 @@ import Str from '../../Support/Str';
 import Builder from '../Query/Builder';
 import Metadata from '../../DataMapper/Metadata';
 import Collection from '../../Support/Collection';
+import Agnostic from '../../Agnostic';
 
 /**
  * Contract for a persistence layer class to implement.
@@ -29,13 +30,18 @@ export default class Repository {
     _table: string = '';
 
     /**
-     * @param entity
-     * @param meta
+     * @private
      */
-    constructor(entity: Function<T>, meta: Metadata) {
-        this._entity = entity;
-        this._meta = meta;
+    _orm: Agnostic;
 
+    /**
+     * @param entity
+     * @param orm
+     */
+    constructor(entity: Function<T>, orm: Agnostic) {
+        this._entity = entity;
+        this._orm    = orm;
+        this._meta   = orm.getMetadata(entity);
 
         this.setTable(Str.snakeCase(this.getEntityClassName()) + 's');
     }
@@ -79,6 +85,13 @@ export default class Repository {
      */
     getMetadata(): Metadata {
         return this._meta;
+    }
+
+    /**
+     * @return {Agnostic}
+     */
+    getOrm(): Agnostic {
+        return this._orm;
     }
 
     /**
